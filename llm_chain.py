@@ -1,28 +1,15 @@
-import getpass
 import os
 
-from langchain.chat_models import init_chat_model
-from langchain_core.prompts import ChatPromptTemplate
-
-if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter API key for OpenAI: ")
 
 language = input("Enter target language [Russian]: ").strip() or "Russian"
 text = input("Enter text to translate [Putin sucks!]: ").strip() or "Putin sucks!"
 
-model = init_chat_model("gpt-4o-mini", model_provider="openai")
+env_model_path = os.environ.get("GGUF_MODEL_PATH")
 
-system_template = "Translate the following from English into {language}"
+if env_model_path and os.path.isfile(os.path.expanduser(env_model_path)):
+    from llm_chain_local_llama import translate_with_llama
+    print(translate_with_llama(language, text))
 
-prompt_template = ChatPromptTemplate.from_messages(
-    [("system", system_template), ("user", "{text}")]
-)
-
-prompt = prompt_template.invoke({"language": language, "text": text})
-
-print(prompt)
-
-prompt.to_messages()
-
-response = model.invoke(prompt)
-print(response.content)
+if os.environ.get("OPENAI_API_KEY"):
+    from llm_chain_openai_gpt import translate_with_openai_gpt
+    print(translate_with_openai_gpt(language, text))
